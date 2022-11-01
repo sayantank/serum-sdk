@@ -1,1 +1,1 @@
-export { SerumMarket } from "./market";
+export { SerumMarket, sum } from "./market";
