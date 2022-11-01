@@ -1,0 +1,18 @@
+{
+  "name": "@tdmblockchain/serum",
+  "version": "1.0.0",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs --dts"
+  },
+  "license": "MIT",
+  "dependencies": {
+    "@solana/web3.js": "^1.66.2"
+  },
+  "devDependencies": {
+    "@types/node": "^18.11.8",
+    "tsup": "^6.3.0",
+    "typescript": "^4.8.4"
+  }
+}
