@@ -1,13 +1,17 @@
 import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
 import { DEX_V3_PROGRAM_ID, SerumMarket } from "../src";
 
+const BTC_USDC_MARKET = new PublicKey(
+  "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw"
+);
+
 describe("layout tests", () => {
   const connection = new Connection(clusterApiUrl("mainnet-beta"));
 
   test("market layout", async () => {
     const market = await SerumMarket.load(
       connection,
-      new PublicKey("A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw"),
+      BTC_USDC_MARKET,
       DEX_V3_PROGRAM_ID
     );
 
