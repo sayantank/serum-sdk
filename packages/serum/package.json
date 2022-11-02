@@ -5,10 +5,11 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format cjs --dts",
-    "test": "jest --detectOpenHandles --coverage"
+    "test": "jest --coverage --forceExit --silent"
   },
   "license": "MIT",
   "dependencies": {
+    "@solana/buffer-layout": "^4.0.0",
     "@solana/web3.js": "^1.66.2"
   },
   "devDependencies": {
