@@ -10,11 +10,15 @@
   "license": "MIT",
   "dependencies": {
     "@solana/buffer-layout": "^4.0.0",
-    "@solana/web3.js": "^1.66.2"
+    "@solana/web3.js": "^1.66.2",
+    "bn.js": "^5.2.1"
   },
   "devDependencies": {
+    "@project-serum/serum": "^0.13.65",
+    "@types/bn.js": "^5.1.1",
     "@types/jest": "^29.2.1",
     "@types/node": "^18.11.8",
+    "eslint-config-custom": "*",
     "jest": "^29.2.2",
     "ts-jest": "^29.0.3",
     "tsup": "^6.3.0",
