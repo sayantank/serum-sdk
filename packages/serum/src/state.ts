@@ -60,3 +60,56 @@ export type PermissionedMarketState = NonPermissionedMarketState & {
   consumeEventsAuthority: PublicKey;
   _padding: Uint8Array;
 };
+
+export type SlabHeader = {
+  bumpIndex: number;
+  _bumpIndexPadding: Uint8Array;
+  freeListLength: number;
+  _freeListLengthPadding: Uint8Array;
+  freeListHead: number;
+  rootNode: number;
+  leafCount: number;
+  _leafCountPadding: Uint8Array;
+};
+
+export type UninitializedSlabNode = {
+  tag: number;
+  _padding: Uint8Array;
+};
+
+export type InnerSlabNode = {
+  tag: number;
+  prefixLen: number;
+  key: BN;
+  children: number[];
+  _padding: Uint8Array;
+};
+
+export type LeafSlabNode = {
+  tag: number;
+  ownerSlot: number;
+  feeTier: number;
+  _padding: Uint8Array;
+  key: BN;
+  owner: PublicKey;
+  quantity: BN;
+  clientOrderId: BN;
+};
+
+export type FreeSlabNode = {
+  tag: number;
+  next: number;
+  _padding: Uint8Array;
+};
+
+export type LastFreeSlabNode = {
+  tag: number;
+  _padding: Uint8Array;
+};
+
+export type SlabNode =
+  | UninitializedSlabNode
+  | InnerSlabNode
+  | LeafSlabNode
+  | FreeSlabNode
+  | LastFreeSlabNode;

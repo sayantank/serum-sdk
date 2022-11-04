@@ -1,9 +1,13 @@
 import { Connection, ParsedAccountData, PublicKey } from "@solana/web3.js";
+import { SlabNodeType } from "./layout";
 import { MarketStateType } from "./market";
 import {
+  InnerSlabNode,
+  LeafSlabNode,
   LegacyMarketState,
   NonPermissionedMarketState,
   PermissionedMarketState,
+  SlabNode,
 } from "./state";
 
 export function throwIfNull<T>(
@@ -51,4 +55,12 @@ export function isPermissionedMarket(
   return (
     (marketState as PermissionedMarketState).openOrdersAuthority !== undefined
   );
+}
+
+export function isInnerNode(node: SlabNode): node is InnerSlabNode {
+  return node.tag === SlabNodeType.Inner;
+}
+
+export function isLeafNode(node: SlabNode): node is LeafSlabNode {
+  return node.tag === SlabNodeType.Leaf;
 }

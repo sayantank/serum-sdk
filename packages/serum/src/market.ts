@@ -4,6 +4,7 @@ import {
   NonPermissionedMarketStateLayout,
   PermissionedMarketStateLayout,
 } from "./layout";
+import { Slab } from "./slab";
 import {
   LegacyMarketState,
   NonPermissionedMarketState,
@@ -25,18 +26,25 @@ export class SerumMarket {
   readonly baseDecimals: number;
   readonly quoteDecimals: number;
 
+  readonly bidsSlab: Slab;
+  readonly asksSlab: Slab;
+
   constructor(
     marketState: MarketStateType,
     address: PublicKey,
     dexProgramId: PublicKey,
     baseDecimals: number,
-    quoteDecimals: number
+    quoteDecimals: number,
+    bidsSlab: Slab,
+    asksSlab: Slab
   ) {
     this.marketState = marketState;
     this.address = address;
     this.dexProgramId = dexProgramId;
     this.baseDecimals = baseDecimals;
     this.quoteDecimals = quoteDecimals;
+    this.bidsSlab = bidsSlab;
+    this.asksSlab = asksSlab;
   }
 
   static async getMarketLayout(connection: Connection, address: PublicKey) {
@@ -82,12 +90,17 @@ export class SerumMarket {
       getMintDecimals(connection, marketState.quoteMint),
     ]);
 
+    const bidsSlab = await Slab.load(connection, marketState.bids);
+    const asksSlab = await Slab.load(connection, marketState.asks);
+
     return new SerumMarket(
       marketState,
       address,
       dexProgramId,
       baseDecimals,
-      quoteDecimals
+      quoteDecimals,
+      bidsSlab,
+      asksSlab
     );
   }
 }
