@@ -15,8 +15,12 @@ export type AccountFlags = {
   CrankAuthorityRequired: boolean;
 };
 
+type AccountPadding = {
+  _headPadding: string;
+  _tailPadding: string;
+};
+
 type BaseMarketState = {
-  _headPadding: Uint8Array;
   address: PublicKey;
   accountFlags: AccountFlags;
   vaultSignerNonce: BN;
@@ -36,13 +40,12 @@ type BaseMarketState = {
   baseLotSize: BN;
   quoteLotSize: BN;
   feeRateBps: BN;
-  _tailPadding: Uint8Array;
 };
 
 /**
  * Legacy MarketState
  */
-export type LegacyMarketState = BaseMarketState;
+export type LegacyMarketState = BaseMarketState & AccountPadding;
 
 /**
  * Non-permissioned MarketState

@@ -1,6 +1,13 @@
+import { seq } from "@solana/buffer-layout";
 import { Connection, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
-import { SlabLayout } from "./layout";
+import {
+  accountFlags,
+  serumHeadPadding,
+  serumTailPadding,
+  SlabHeaderLayout,
+  slabNode,
+} from "./layout";
 import { AccountFlags, LeafSlabNode, SlabHeader, SlabNode } from "./state";
 import { isInnerNode, isLeafNode } from "./utils";
 
@@ -14,13 +21,45 @@ export class Slab {
     header: SlabHeader,
     nodes: SlabNode[]
   ) {
+    if (
+      !accountFlags.Initialized ||
+      !(accountFlags.Bids || accountFlags.Asks)
+    ) {
+      throw new Error("Invalid slab account");
+    }
+
     this.accountFlags = accountFlags;
     this.header = header;
     this.nodes = nodes;
   }
 
-  static decode(data: Buffer): Slab {
-    return SlabLayout.decode(data.subarray(0, -7), 5);
+  static getTotalSize(nodeCount: number) {
+    const minSize =
+      12 +
+      accountFlags().span +
+      SlabHeaderLayout.span +
+      nodeCount * slabNode().span;
+
+    const modulo = minSize % 8;
+
+    return modulo <= 4 ? minSize + (4 - modulo) : minSize + (8 - modulo + 4);
+  }
+
+  static decode(b: Uint8Array): Slab {
+    serumHeadPadding().decode(b, 0);
+    serumTailPadding().decode(b, b.length - 7);
+
+    const flags = accountFlags().decode(b, 5);
+    const header = SlabHeaderLayout.decode(b, 13);
+
+    const nodeCount = Math.floor(
+      (b.length - (12 + accountFlags().span + SlabHeaderLayout.span)) /
+        slabNode().span
+    );
+
+    const nodes = seq(slabNode(), nodeCount, "nodes").decode(b, 45);
+
+    return new Slab(flags, header, nodes);
   }
 
   static async load(

@@ -4,7 +4,6 @@ import {
   Blob,
   blob,
   Layout,
-  offset,
   seq,
   struct,
   u32,
@@ -13,7 +12,6 @@ import {
 } from "@solana/buffer-layout";
 import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
-import { Slab } from "./slab";
 import {
   AccountFlags,
   FreeSlabNode,
@@ -29,6 +27,49 @@ import {
 } from "./state";
 
 // ============================= Utility layouts =============================
+
+class StringLayout extends Layout<string> {
+  readonly value: string;
+
+  constructor(s: string, property?: string) {
+    super(s.length, property);
+    this.value = s;
+  }
+
+  decode(b: Uint8Array, offset?: number): string {
+    const s = Buffer.from(b).toString(
+      "utf8",
+      offset,
+      (offset ? offset : 0) + this.span
+    );
+    if (s !== this.value) throw new Error(`Invalid string: ${s}`);
+
+    return s;
+  }
+
+  encode(src: string, b: Uint8Array, offset?: number | undefined): number {
+    if (src !== this.value)
+      throw new Error(`Invalid string: ${src}. Should be ${this.value}`);
+
+    b.set(Buffer.from(src, "utf-8"), offset ? offset : 0);
+
+    return this.span;
+  }
+
+  // encode(src: string, b: Uint8Array, offset?: number): number {
+  //   return write(src, offset ? offset : 0, this.span, "utf8");
+  // }
+}
+export function string(s: string, property?: string) {
+  return new StringLayout(s, property);
+}
+export function serumHeadPadding() {
+  return string("serum", "_headPadding");
+}
+export function serumTailPadding() {
+  return string("padding", "_tailPadding");
+}
+
 class AccountFlagsLayout extends Layout<AccountFlags> {
   private _lower: BitStructure;
   private _upper: BitStructure;
@@ -171,31 +212,36 @@ function baseMarketLayout() {
 }
 
 export const LegacyMarketStateLayout = struct<Readonly<LegacyMarketState>>([
-  blob(5),
+  serumHeadPadding(),
   ...baseMarketLayout(),
-  blob(7),
+  serumTailPadding(),
 ]);
 
 export const NonPermissionedMarketStateLayout = struct<
   Readonly<NonPermissionedMarketState>
->([blob(5), ...baseMarketLayout(), u64("referrerRebatesAccrued"), blob(7)]);
+>([
+  serumHeadPadding(),
+  ...baseMarketLayout(),
+  u64("referrerRebatesAccrued"),
+  serumTailPadding(),
+]);
 
 export const PermissionedMarketStateLayout = struct<
   Readonly<PermissionedMarketState>
 >([
-  blob(5),
+  serumHeadPadding(),
   ...baseMarketLayout(),
   u64("referrerRebatesAccrued"),
   publicKey("openOrdersAuthority"),
   publicKey("pruneAuthority"),
   publicKey("consumeEventsAuthority"),
   blob(992),
-  blob(7),
+  serumTailPadding(),
 ]);
 
 // ============================= Slab Layouts =============================
 
-const SlabHeaderLayout = struct<SlabHeader>([
+export const SlabHeaderLayout = struct<SlabHeader>([
   u32("bumpIndex"),
   zeros(4),
   u32("freelistLength"),
@@ -248,39 +294,41 @@ const LastFreeNode = struct<LastFreeSlabNode>([u32("tag"), blob(68)]);
 
 export class SlabNodeLayout extends Layout<SlabNode> {
   constructor() {
-    super(68, "slabNode");
+    super(72, "slabNode");
   }
 
-  decode(b: Uint8Array): SlabNode {
-    const tag = new UInt(4, "tag").decode(b);
+  decode(b: Uint8Array, offset?: number): SlabNode {
+    const o = offset ? offset : 0;
+    const tag = new UInt(4, "tag").decode(b, o);
     switch (tag) {
       case 0:
-        return UninitializedNodeLayout.decode(b);
+        return UninitializedNodeLayout.decode(b, o);
       case 1:
-        return InnerNodeLayout.decode(b);
+        return InnerNodeLayout.decode(b, o);
       case 2:
-        return LeafNodeLayout.decode(b);
+        return LeafNodeLayout.decode(b, o);
       case 3:
-        return FreeNodeLayout.decode(b);
+        return FreeNodeLayout.decode(b, o);
       case 4:
-        return LastFreeNode.decode(b);
+        return LastFreeNode.decode(b, o);
       default:
         throw new Error("invalid tag");
     }
   }
 
-  encode(src: SlabNode, b: Uint8Array): number {
+  encode(src: SlabNode, b: Uint8Array, offset?: number | undefined): number {
+    const o = offset ? offset : 0;
     switch (src.tag) {
       case 0:
-        return UninitializedNodeLayout.encode(src, b);
+        return UninitializedNodeLayout.encode(src, b, o);
       case 1:
-        return InnerNodeLayout.encode(src as InnerSlabNode, b);
+        return InnerNodeLayout.encode(src as InnerSlabNode, b, o);
       case 2:
-        return LeafNodeLayout.encode(src as LeafSlabNode, b);
+        return LeafNodeLayout.encode(src as LeafSlabNode, b, o);
       case 3:
-        return FreeNodeLayout.encode(src as FreeSlabNode, b);
+        return FreeNodeLayout.encode(src as FreeSlabNode, b, o);
       case 4:
-        return LastFreeNode.encode(src, b);
+        return LastFreeNode.encode(src, b, o);
       default:
         throw new Error("invalid tag");
     }
@@ -289,18 +337,5 @@ export class SlabNodeLayout extends Layout<SlabNode> {
 export function slabNode() {
   return new SlabNodeLayout();
 }
-
-export const SlabLayout = struct<Slab>([
-  accountFlags("accountFlags"),
-  SlabHeaderLayout,
-  seq(
-    slabNode(),
-    offset(
-      SlabHeaderLayout.layoutFor("bumpIndex") as unknown as Layout<number>,
-      SlabHeaderLayout.offsetOf("bumpIndex")! - SlabHeaderLayout.span
-    ),
-    "nodes"
-  ),
-]);
 
 // ============================= Queue Layouts =============================

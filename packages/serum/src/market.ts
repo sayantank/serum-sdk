@@ -90,8 +90,8 @@ export class SerumMarket {
       getMintDecimals(connection, marketState.quoteMint),
     ]);
 
-    const bidsSlab = await Slab.load(connection, marketState.bids);
     const asksSlab = await Slab.load(connection, marketState.asks);
+    const bidsSlab = await Slab.load(connection, marketState.bids);
 
     return new SerumMarket(
       marketState,

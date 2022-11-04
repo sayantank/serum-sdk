@@ -1,20 +1,20 @@
 import { clusterApiUrl, Connection, PublicKey } from "@solana/web3.js";
-import { DEX_V3_PROGRAM_ID, SerumMarket } from "../src";
+import { DEX_V3_DEVNET_PROGRAM_ID, SerumMarket } from "../src";
 
 const BTC_USDC_MARKET = new PublicKey(
-  "A8YFbxQYFVqKZaoYJLLUVcQiWP7G2MeEgW5wsAQgMvFw"
+  "FYz52ugfgU3K6qmHr6zBE1KCiqk86hzrqtcNJh6seeFe"
 );
-const BTC_MINT = new PublicKey("9n4nbM75f5Ui33ZbPYXn59EwSgE8CGsHtAeTH5YFeJ9E");
-const USDC_MINT = new PublicKey("EPjFWdd5AufqSSqeM2qN1xzybapC8G4wEGGkZwyTDt1v");
+const BTC_MINT = new PublicKey("BrwwxApRNfCqH6ZyLhvimFpiZsqqs9UQ6wPWuNAKPaaY");
+const USDC_MINT = new PublicKey("HbGPWHiqpj7fYn5khwxuX99bT3AFGfNgQbEeekqoMj1z");
 
 describe("layout tests", () => {
-  const connection = new Connection(clusterApiUrl("mainnet-beta"));
+  const connection = new Connection(clusterApiUrl("devnet"));
 
   test("market layout", async () => {
     const market = await SerumMarket.load(
       connection,
       BTC_USDC_MARKET,
-      DEX_V3_PROGRAM_ID
+      DEX_V3_DEVNET_PROGRAM_ID
     );
 
     expect(market.marketState.accountFlags).toEqual(
