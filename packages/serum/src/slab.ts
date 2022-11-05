@@ -9,7 +9,7 @@ import {
   slabNode,
 } from "./layout";
 import { AccountFlags, LeafSlabNode, SlabHeader, SlabNode } from "./state";
-import { isInnerNode, isLeafNode } from "./utils";
+import { calculateTotalAccountSize, isInnerNode, isLeafNode } from "./utils";
 
 export class Slab {
   readonly accountFlags: AccountFlags;
@@ -22,8 +22,8 @@ export class Slab {
     nodes: SlabNode[]
   ) {
     if (
-      !accountFlags.Initialized ||
-      !(accountFlags.Bids || accountFlags.Asks)
+      !accountFlags.initialized ||
+      !(accountFlags.bids || accountFlags.asks)
     ) {
       throw new Error("Invalid slab account");
     }
@@ -34,15 +34,11 @@ export class Slab {
   }
 
   static getTotalSize(nodeCount: number) {
-    const minSize =
-      12 +
-      accountFlags().span +
-      SlabHeaderLayout.span +
-      nodeCount * slabNode().span;
-
-    const modulo = minSize % 8;
-
-    return modulo <= 4 ? minSize + (4 - modulo) : minSize + (8 - modulo + 4);
+    return calculateTotalAccountSize(
+      slabNode().span,
+      SlabHeaderLayout.span,
+      nodeCount
+    );
   }
 
   static decode(b: Uint8Array): Slab {

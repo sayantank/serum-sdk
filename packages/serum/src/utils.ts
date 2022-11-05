@@ -20,6 +20,26 @@ export function throwIfNull<T>(
   return value;
 }
 
+export function calculateTotalAccountSize(
+  individualAccountSize: number,
+  accountHeaderSize: number,
+  length: number
+) {
+  const accountPadding = 12;
+  const accountFlags = 8; // accountFlags().span
+  const minRequiredSize =
+    accountPadding +
+    accountFlags +
+    accountHeaderSize +
+    length * individualAccountSize;
+
+  const modulo = minRequiredSize % 8;
+
+  return modulo <= 4
+    ? minRequiredSize + (4 - modulo)
+    : minRequiredSize + (8 - modulo + 4);
+}
+
 export async function getMintDecimals(connection: Connection, mint: PublicKey) {
   const { value } = throwIfNull(
     await connection.getParsedAccountInfo(mint),

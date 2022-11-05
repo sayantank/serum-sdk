@@ -25,21 +25,24 @@ describe("layout tests", () => {
     expect(market.marketState.quoteMint).toEqual(USDC_MINT);
 
     // TODO: add checks for queues, slabs, etc
+
+    const eventQueue = await market.loadEventQueue(connection);
+    expect([...eventQueue.events()].length).toEqual(2);
   });
 
   // TODO: add tests for other market types (permissioned, legacy maybe not lol)
 });
 
 const InitializedMarketAccountFlags = {
-  Initialized: true,
-  Market: true,
-  OpenOrders: false,
-  RequestQueue: false,
-  EventQueue: false,
-  Bids: false,
-  Asks: false,
-  Disabled: false,
-  Closed: false,
-  Permissioned: false,
-  CrankAuthorityRequired: false,
+  initialized: true,
+  market: true,
+  openOrders: false,
+  requestQueue: false,
+  eventQueue: false,
+  bids: false,
+  asks: false,
+  disabled: false,
+  closed: false,
+  permissioned: false,
+  crankAuthorityRequired: false,
 };

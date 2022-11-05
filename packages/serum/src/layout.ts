@@ -14,6 +14,9 @@ import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import {
   AccountFlags,
+  Event,
+  EventFlags,
+  EventQueueHeader,
   FreeSlabNode,
   InnerSlabNode,
   LastFreeSlabNode,
@@ -55,10 +58,6 @@ class StringLayout extends Layout<string> {
 
     return this.span;
   }
-
-  // encode(src: string, b: Uint8Array, offset?: number): number {
-  //   return write(src, offset ? offset : 0, this.span, "utf8");
-  // }
 }
 export function string(s: string, property?: string) {
   return new StringLayout(s, property);
@@ -79,17 +78,17 @@ class AccountFlagsLayout extends Layout<AccountFlags> {
     this._lower = new BitStructure(u32(), false);
     this._upper = new BitStructure(u32(), false);
 
-    this.addBoolean("Initialized");
-    this.addBoolean("Market");
-    this.addBoolean("OpenOrders");
-    this.addBoolean("RequestQueue");
-    this.addBoolean("EventQueue");
-    this.addBoolean("Bids");
-    this.addBoolean("Asks");
-    this.addBoolean("Disabled");
-    this.addBoolean("Closed");
-    this.addBoolean("Permissioned");
-    this.addBoolean("CrankAuthorityRequired");
+    this.addBoolean("initialized");
+    this.addBoolean("market");
+    this.addBoolean("openOrders");
+    this.addBoolean("requestQueue");
+    this.addBoolean("eventQueue");
+    this.addBoolean("bids");
+    this.addBoolean("asks");
+    this.addBoolean("disabled");
+    this.addBoolean("closed");
+    this.addBoolean("permissioned");
+    this.addBoolean("crankAuthorityRequired");
   }
 
   addBoolean(property: string) {
@@ -339,3 +338,56 @@ export function slabNode() {
 }
 
 // ============================= Queue Layouts =============================
+
+class EventFlagsLayout extends Layout<EventFlags> {
+  private bits: BitStructure;
+
+  constructor(property?: string) {
+    super(1, property);
+    this.bits = new BitStructure(u8(), false);
+
+    this.addBoolean("fill");
+    this.addBoolean("out");
+    this.addBoolean("bid");
+    this.addBoolean("maker");
+  }
+
+  addBoolean(property: string) {
+    this.bits.addBoolean(property);
+  }
+
+  decode(b: Uint8Array, offset?: number | undefined): EventFlags {
+    const decoded = this.bits.decode(b, offset);
+
+    return decoded as EventFlags;
+  }
+
+  encode(src: EventFlags, b: Uint8Array, offset?: number | undefined): number {
+    return this.bits.encode(src, b, offset);
+  }
+}
+export function eventFlags(property?: string) {
+  return new EventFlagsLayout(property);
+}
+
+export const EventQueueHeaderLayout = struct<EventQueueHeader>([
+  u32("head"),
+  zeros(4),
+  u32("count"),
+  zeros(4),
+  u32("seqNum"),
+  zeros(4),
+]);
+
+export const EventLayout = struct<Event>([
+  eventFlags(),
+  u8("ownerSlot"),
+  u8("feeTier"),
+  blob(5),
+  u64("nativeQuantityReleased"),
+  u64("nativeQuantityPaid"),
+  u64("nativeFeeOrRebate"),
+  u128("orderId"),
+  publicKey("owner"),
+  u64("clientOrderId"),
+]);

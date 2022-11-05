@@ -4,7 +4,8 @@ import {
   NonPermissionedMarketStateLayout,
   PermissionedMarketStateLayout,
 } from "./layout";
-import { Slab } from "./slab";
+import { Orderbook } from "./orderbook";
+import { EventQueue } from "./queue";
 import {
   LegacyMarketState,
   NonPermissionedMarketState,
@@ -26,25 +27,18 @@ export class SerumMarket {
   readonly baseDecimals: number;
   readonly quoteDecimals: number;
 
-  readonly bidsSlab: Slab;
-  readonly asksSlab: Slab;
-
   constructor(
     marketState: MarketStateType,
     address: PublicKey,
     dexProgramId: PublicKey,
     baseDecimals: number,
-    quoteDecimals: number,
-    bidsSlab: Slab,
-    asksSlab: Slab
+    quoteDecimals: number
   ) {
     this.marketState = marketState;
     this.address = address;
     this.dexProgramId = dexProgramId;
     this.baseDecimals = baseDecimals;
     this.quoteDecimals = quoteDecimals;
-    this.bidsSlab = bidsSlab;
-    this.asksSlab = asksSlab;
   }
 
   static async getMarketLayout(connection: Connection, address: PublicKey) {
@@ -70,7 +64,7 @@ export class SerumMarket {
     connection: Connection,
     address: PublicKey,
     dexProgramId: PublicKey
-  ) {
+  ): Promise<SerumMarket> {
     const accountInfo = await connection.getAccountInfo(address);
 
     if (accountInfo === null) {
@@ -90,17 +84,24 @@ export class SerumMarket {
       getMintDecimals(connection, marketState.quoteMint),
     ]);
 
-    const asksSlab = await Slab.load(connection, marketState.asks);
-    const bidsSlab = await Slab.load(connection, marketState.bids);
-
     return new SerumMarket(
       marketState,
       address,
       dexProgramId,
       baseDecimals,
-      quoteDecimals,
-      bidsSlab,
-      asksSlab
+      quoteDecimals
     );
+  }
+
+  loadOrderbook(connection: Connection): Promise<Orderbook> {
+    return Orderbook.load(
+      connection,
+      this.marketState.bids,
+      this.marketState.asks
+    );
+  }
+
+  loadEventQueue(connection: Connection): Promise<EventQueue> {
+    return EventQueue.load(connection, this.marketState.eventQueue);
   }
 }

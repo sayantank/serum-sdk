@@ -2,17 +2,17 @@ import { PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 
 export type AccountFlags = {
-  Initialized: boolean;
-  Market: boolean;
-  OpenOrders: boolean;
-  RequestQueue: boolean;
-  EventQueue: boolean;
-  Bids: boolean;
-  Asks: boolean;
-  Disabled: boolean;
-  Closed: boolean;
-  Permissioned: boolean;
-  CrankAuthorityRequired: boolean;
+  initialized: boolean;
+  market: boolean;
+  openOrders: boolean;
+  requestQueue: boolean;
+  eventQueue: boolean;
+  bids: boolean;
+  asks: boolean;
+  disabled: boolean;
+  closed: boolean;
+  permissioned: boolean;
+  crankAuthorityRequired: boolean;
 };
 
 type AccountPadding = {
@@ -116,3 +116,32 @@ export type SlabNode =
   | LeafSlabNode
   | FreeSlabNode
   | LastFreeSlabNode;
+
+export type EventQueueHeader = {
+  head: number;
+  _headPadding: Uint8Array;
+  count: number;
+  _countPadding: Uint8Array;
+  seqNum: number;
+  _seqNumPadding: Uint8Array;
+};
+
+export type EventFlags = {
+  fill: boolean;
+  out: boolean;
+  bid: boolean;
+  maker: boolean;
+};
+
+export type Event = {
+  eventFlags: EventFlags;
+  ownerSlot: number;
+  feeTier: number;
+  _padding: Uint8Array;
+  nativeQuantityReleased: BN;
+  nativeQuantityPaid: BN;
+  nativeFeeOrRebate: BN;
+  orderId: BN;
+  owner: PublicKey;
+  clientOrderId: BN;
+};
