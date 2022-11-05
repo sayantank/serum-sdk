@@ -2,6 +2,7 @@ import { Connection, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import { SlabNodeType } from "./layout";
 import { MarketStateType } from "./market";
 import {
+  AccountFlags,
   InnerSlabNode,
   LeafSlabNode,
   LegacyMarketState,
@@ -9,6 +10,20 @@ import {
   PermissionedMarketState,
   SlabNode,
 } from "./state";
+
+export const emptyAccountFlags: AccountFlags = {
+  initialized: false,
+  market: false,
+  openOrders: false,
+  requestQueue: false,
+  eventQueue: false,
+  bids: false,
+  asks: false,
+  disabled: false,
+  closed: false,
+  permissioned: false,
+  crankAuthorityRequired: false,
+};
 
 export function throwIfNull<T>(
   value: T | null,

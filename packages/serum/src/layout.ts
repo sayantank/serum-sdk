@@ -28,6 +28,7 @@ import {
   SlabNode,
   UninitializedSlabNode,
 } from "./state";
+import { emptyAccountFlags } from "./utils";
 
 // ============================= Utility layouts =============================
 
@@ -70,11 +71,13 @@ export function serumTailPadding() {
 }
 
 class AccountFlagsLayout extends Layout<AccountFlags> {
+  private flags: AccountFlags;
   private _lower: BitStructure;
   private _upper: BitStructure;
 
-  constructor(property?: string) {
+  constructor(flags: AccountFlags, property?: string) {
     super(8, property);
+    this.flags = flags;
     this._lower = new BitStructure(u32(), false);
     this._upper = new BitStructure(u32(), false);
 
@@ -106,7 +109,12 @@ class AccountFlagsLayout extends Layout<AccountFlags> {
       (offset ? offset : 0) + this._lower.span
     );
 
-    return { ...lowerDecoded, ...upperDecoded } as AccountFlags;
+    const flags = { ...lowerDecoded, ...upperDecoded } as AccountFlags;
+
+    if (JSON.stringify(flags) !== JSON.stringify(this.flags))
+      throw new Error(`Invalid account flags.`);
+
+    return flags;
   }
 
   encode(
@@ -114,14 +122,19 @@ class AccountFlagsLayout extends Layout<AccountFlags> {
     b: Uint8Array,
     offset?: number | undefined
   ): number {
+    if (src !== this.flags) throw new Error(`Invalid account flags.`);
+
     return (
       this._lower.encode(src, b, offset) +
       this._upper.encode(src, b, (offset ? offset : 0) + this._lower.span)
     );
   }
 }
-export function accountFlags(property?: string): AccountFlagsLayout {
-  return new AccountFlagsLayout(property);
+export function accountFlags(
+  flags: AccountFlags,
+  property?: string
+): AccountFlagsLayout {
+  return new AccountFlagsLayout(flags, property);
 }
 
 class PublicKeyLayout extends Layout<PublicKey> {
@@ -188,7 +201,10 @@ export function zeros(span: number, property?: string) {
 
 function baseMarketLayout() {
   return [
-    accountFlags("accountFlags"),
+    accountFlags(
+      { ...emptyAccountFlags, initialized: true, market: true },
+      "accountFlags"
+    ),
     publicKey("address"),
     u64("vaultSignerNonce"),
     publicKey("baseMint"),
@@ -391,3 +407,5 @@ export const EventLayout = struct<Event>([
   publicKey("owner"),
   u64("clientOrderId"),
 ]);
+
+// ============================= Open Orders Layouts =============================

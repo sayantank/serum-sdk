@@ -8,7 +8,7 @@ import {
   serumTailPadding,
 } from "./layout";
 import { AccountFlags, EventQueueHeader, Event } from "./state";
-import { calculateTotalAccountSize } from "./utils";
+import { calculateTotalAccountSize, emptyAccountFlags } from "./utils";
 
 export class EventQueue {
   readonly accountFlags: AccountFlags;
@@ -41,11 +41,20 @@ export class EventQueue {
     serumHeadPadding().decode(b, 0);
     serumTailPadding().decode(b, b.length - 7);
 
-    const flags = accountFlags().decode(b, 5);
+    const eventQueueAccountFlags: AccountFlags = {
+      ...emptyAccountFlags,
+      initialized: true,
+      eventQueue: true,
+    };
+
+    const flags = accountFlags(eventQueueAccountFlags).decode(b, 5);
     const header = EventQueueHeaderLayout.decode(b, 13);
 
     const eventCount = Math.floor(
-      (b.length - (12 + accountFlags().span + EventQueueHeaderLayout.span)) /
+      (b.length -
+        (12 +
+          accountFlags(eventQueueAccountFlags).span +
+          EventQueueHeaderLayout.span)) /
         EventLayout.span
     );
 

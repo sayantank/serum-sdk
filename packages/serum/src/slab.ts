@@ -9,9 +9,17 @@ import {
   slabNode,
 } from "./layout";
 import { AccountFlags, LeafSlabNode, SlabHeader, SlabNode } from "./state";
-import { calculateTotalAccountSize, isInnerNode, isLeafNode } from "./utils";
+import {
+  calculateTotalAccountSize,
+  emptyAccountFlags,
+  isInnerNode,
+  isLeafNode,
+} from "./utils";
+
+export type SlabType = "bids" | "asks";
 
 export class Slab {
+  readonly type: SlabType;
   readonly accountFlags: AccountFlags;
   readonly header: SlabHeader;
   readonly nodes: SlabNode[];
@@ -27,7 +35,7 @@ export class Slab {
     ) {
       throw new Error("Invalid slab account");
     }
-
+    this.type = accountFlags.bids ? "bids" : "asks";
     this.accountFlags = accountFlags;
     this.header = header;
     this.nodes = nodes;
@@ -41,15 +49,22 @@ export class Slab {
     );
   }
 
-  static decode(b: Uint8Array): Slab {
+  static decode(b: Uint8Array, type: SlabType): Slab {
     serumHeadPadding().decode(b, 0);
     serumTailPadding().decode(b, b.length - 7);
 
-    const flags = accountFlags().decode(b, 5);
+    const slabFlags: AccountFlags = {
+      ...emptyAccountFlags,
+      initialized: true,
+      bids: type === "bids",
+      asks: type === "asks",
+    };
+
+    const flags = accountFlags(slabFlags).decode(b, 5);
     const header = SlabHeaderLayout.decode(b, 13);
 
     const nodeCount = Math.floor(
-      (b.length - (12 + accountFlags().span + SlabHeaderLayout.span)) /
+      (b.length - (12 + accountFlags(slabFlags).span + SlabHeaderLayout.span)) /
         slabNode().span
     );
 
@@ -60,7 +75,8 @@ export class Slab {
 
   static async load(
     connection: Connection,
-    slabAccount: PublicKey
+    slabAccount: PublicKey,
+    type: SlabType
   ): Promise<Slab> {
     const accountInfo = await connection.getAccountInfo(slabAccount);
 
@@ -68,7 +84,7 @@ export class Slab {
       throw new Error("Slab account not found");
     }
 
-    return Slab.decode(accountInfo.data);
+    return Slab.decode(accountInfo.data, type);
   }
 
   get(searchKey: BN | number): SlabNode | null {

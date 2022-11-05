@@ -15,8 +15,8 @@ export class Orderbook {
     bidsAccount: PublicKey,
     asksAccount: PublicKey
   ) {
-    const bidsSlab = await Slab.load(connection, bidsAccount);
-    const asksSlab = await Slab.load(connection, asksAccount);
+    const bidsSlab = await Slab.load(connection, bidsAccount, "bids");
+    const asksSlab = await Slab.load(connection, asksAccount, "asks");
 
     return new Orderbook(bidsSlab, asksSlab);
   }
