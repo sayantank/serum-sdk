@@ -1,4 +1,5 @@
 import { Connection, ParsedAccountData, PublicKey } from "@solana/web3.js";
+import BN from "bn.js";
 import { SlabNodeType } from "./layout";
 import { MarketStateType } from "./market";
 import {
@@ -98,4 +99,17 @@ export function isInnerNode(node: SlabNode): node is InnerSlabNode {
 
 export function isLeafNode(node: SlabNode): node is LeafSlabNode {
   return node.tag === SlabNodeType.Leaf;
+}
+
+export function getPriceFromKey(key: BN) {
+  return key.ushrn(64);
+}
+
+export function divideBNToNumber(num: BN, den: BN): number {
+  const quotient = num.div(den).toNumber();
+  const remainder = num.umod(den);
+
+  const gcd = remainder.gcd(den);
+
+  return quotient + remainder.div(gcd).toNumber() / den.div(gcd).toNumber();
 }

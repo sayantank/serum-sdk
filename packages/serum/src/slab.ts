@@ -131,7 +131,7 @@ export class Slab {
 
     while (stack.length > 0) {
       const index = stack.pop();
-      if (!index) return;
+      if (index === undefined) return;
 
       const currNode = this.nodes[index];
 

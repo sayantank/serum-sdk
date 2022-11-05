@@ -164,13 +164,12 @@ class BNLayout extends Layout<BN> {
   }
 
   decode(b: Uint8Array, offset?: number | undefined): BN {
-    const start = offset ? offset : 0;
-    const end = offset ? offset + this.span : this.span;
-    return new BN(b.slice(start, end));
+    const bytes = blob(this.span).decode(b, offset);
+    return new BN(bytes, 10, "le");
   }
 
   encode(src: BN, b: Uint8Array, offset?: number | undefined): number {
-    b.set(src.toArrayLike(Buffer, "le", 8), offset ? offset : 0);
+    b.set(src.toArrayLike(Buffer, "le", 8), offset);
     return this.span;
   }
 }
@@ -292,7 +291,7 @@ const InnerNodeLayout = struct<InnerSlabNode>([
 const LeafNodeLayout = struct<LeafSlabNode>([
   u32("tag"),
   u8("ownerSlot"),
-  u32("feeTier"),
+  u8("feeTier"),
   blob(2, "_padding"),
   u128("key"),
   publicKey("owner"),
@@ -314,37 +313,36 @@ export class SlabNodeLayout extends Layout<SlabNode> {
   }
 
   decode(b: Uint8Array, offset?: number): SlabNode {
-    const o = offset ? offset : 0;
-    const tag = new UInt(4, "tag").decode(b, o);
+    const tag = new UInt(4, "tag").decode(b, offset);
     switch (tag) {
       case 0:
-        return UninitializedNodeLayout.decode(b, o);
+        return UninitializedNodeLayout.decode(b, offset);
       case 1:
-        return InnerNodeLayout.decode(b, o);
-      case 2:
-        return LeafNodeLayout.decode(b, o);
+        return InnerNodeLayout.decode(b, offset);
+      case 2: {
+        return LeafNodeLayout.decode(b, offset);
+      }
       case 3:
-        return FreeNodeLayout.decode(b, o);
+        return FreeNodeLayout.decode(b, offset);
       case 4:
-        return LastFreeNode.decode(b, o);
+        return LastFreeNode.decode(b, offset);
       default:
         throw new Error("invalid tag");
     }
   }
 
   encode(src: SlabNode, b: Uint8Array, offset?: number | undefined): number {
-    const o = offset ? offset : 0;
     switch (src.tag) {
       case 0:
-        return UninitializedNodeLayout.encode(src, b, o);
+        return UninitializedNodeLayout.encode(src, b, offset);
       case 1:
-        return InnerNodeLayout.encode(src as InnerSlabNode, b, o);
+        return InnerNodeLayout.encode(src as InnerSlabNode, b, offset);
       case 2:
-        return LeafNodeLayout.encode(src as LeafSlabNode, b, o);
+        return LeafNodeLayout.encode(src as LeafSlabNode, b, offset);
       case 3:
-        return FreeNodeLayout.encode(src as FreeSlabNode, b, o);
+        return FreeNodeLayout.encode(src as FreeSlabNode, b, offset);
       case 4:
-        return LastFreeNode.encode(src, b, o);
+        return LastFreeNode.encode(src, b, offset);
       default:
         throw new Error("invalid tag");
     }
@@ -426,7 +424,7 @@ export const OpenOrdersLayout = struct<OpenOrdersState>([
   u128("freeSlotBits"),
   u128("isBidBits"),
   seq(u128(), 128, "orders"),
-  seq(u64(), 128, "clientIds"),
+  seq(u64(), 128, "clientOrderIds"),
   u64("referrerRebatesAccrued"),
   serumTailPadding(),
 ]);

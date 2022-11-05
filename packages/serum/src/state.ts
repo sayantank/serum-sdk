@@ -157,7 +157,7 @@ export type OpenOrdersState = {
   freeSlotBits: BN;
   isBidBits: BN;
   orders: BN[];
-  clientIds: BN[];
+  clientOrderIds: BN[];
   referrerRebatesAccrued: BN;
 } & AccountPadding;
 
@@ -171,5 +171,5 @@ export type Order = {
   sizeLots: BN;
   side: "buy" | "sell";
   feeTier: number;
-  clientId: BN;
+  clientOrderId: BN;
 };

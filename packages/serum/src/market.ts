@@ -1,4 +1,5 @@
 import { Connection, PublicKey } from "@solana/web3.js";
+import BN from "bn.js";
 import {
   LegacyMarketStateLayout,
   NonPermissionedMarketStateLayout,
@@ -10,9 +11,10 @@ import { EventQueue } from "./queue";
 import {
   LegacyMarketState,
   NonPermissionedMarketState,
+  Order,
   PermissionedMarketState,
 } from "./state";
-import { getMintDecimals } from "./utils";
+import { divideBNToNumber, getMintDecimals } from "./utils";
 
 export type MarketStateType =
   | LegacyMarketState
@@ -34,6 +36,9 @@ export class SerumMarket {
   readonly baseDecimals: number;
   readonly quoteDecimals: number;
 
+  readonly baseSplTokenMultiplier: BN;
+  readonly quoteSplTokenMultiplier: BN;
+
   constructor(
     marketState: MarketStateType,
     marketLayout: MarketLayoutType,
@@ -48,6 +53,9 @@ export class SerumMarket {
     this.dexProgramId = dexProgramId;
     this.baseDecimals = baseDecimals;
     this.quoteDecimals = quoteDecimals;
+
+    this.baseSplTokenMultiplier = new BN(10).pow(new BN(baseDecimals));
+    this.quoteSplTokenMultiplier = new BN(10).pow(new BN(quoteDecimals));
   }
 
   static async getMarketLayout(connection: Connection, address: PublicKey) {
@@ -103,12 +111,53 @@ export class SerumMarket {
     );
   }
 
-  loadOrderbook(connection: Connection): Promise<Orderbook> {
-    return Orderbook.load(
-      connection,
-      this.marketState.bids,
-      this.marketState.asks
+  priceLotsToNumber(price: BN): number {
+    const num = price
+      .mul(this.marketState.quoteLotSize)
+      .mul(this.baseSplTokenMultiplier);
+    const den = this.marketState.baseLotSize.mul(this.quoteSplTokenMultiplier);
+
+    return divideBNToNumber(num, den);
+  }
+
+  priceNumberToLots(price: number): BN {
+    return new BN(
+      Math.round(
+        (price *
+          Math.pow(10, this.quoteDecimals) *
+          this.marketState.baseLotSize.toNumber()) /
+          (Math.pow(10, this.baseDecimals) *
+            this.marketState.quoteLotSize.toNumber())
+      )
     );
+  }
+
+  baseSizeLotsToNumber(size: BN): number {
+    return divideBNToNumber(
+      size.mul(this.marketState.baseLotSize),
+      this.baseSplTokenMultiplier
+    );
+  }
+
+  baseSizeNumberToLots(size: number): BN {
+    const native = new BN(Math.round(size * Math.pow(10, this.baseDecimals)));
+    return native.div(this.marketState.baseLotSize);
+  }
+
+  quoteSizeLotsToNumber(size: BN): number {
+    return divideBNToNumber(
+      size.mul(this.marketState.quoteLotSize),
+      this.quoteSplTokenMultiplier
+    );
+  }
+
+  quoteSizeNumberToLots(size: number): BN {
+    const native = new BN(Math.round(size * Math.pow(10, this.quoteDecimals)));
+    return native.div(this.marketState.quoteLotSize);
+  }
+
+  loadOrderbook(connection: Connection): Promise<Orderbook> {
+    return Orderbook.load(connection, this);
   }
 
   loadEventQueue(connection: Connection): Promise<EventQueue> {
@@ -124,6 +173,22 @@ export class SerumMarket {
       this.address,
       owner,
       this.dexProgramId
+    );
+  }
+
+  async loadOrders(connection: Connection, owner: PublicKey): Promise<Order[]> {
+    const [orderbook, openOrders] = await Promise.all([
+      this.loadOrderbook(connection),
+      this.loadOpenOrders(connection, owner),
+    ]);
+
+    const allOrders = [
+      ...orderbook.orders("bids"),
+      ...orderbook.orders("asks"),
+    ];
+
+    return allOrders.filter((order) =>
+      openOrders.some((oo) => oo.address.equals(order.openOrdersAddress))
     );
   }
 }
