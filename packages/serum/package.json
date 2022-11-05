@@ -5,7 +5,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format cjs --dts",
-    "test": "jest --coverage --forceExit --silent"
+    "test": "jest --coverage --forceExit --silent --testTimeout=20000"
   },
   "license": "MIT",
   "dependencies": {

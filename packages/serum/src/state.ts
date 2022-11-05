@@ -145,3 +145,31 @@ export type Event = {
   owner: PublicKey;
   clientOrderId: BN;
 };
+
+export type OpenOrdersState = {
+  accountFlags: AccountFlags;
+  market: PublicKey;
+  owner: PublicKey;
+  baseTokenFree: BN;
+  baseTokenTotal: BN;
+  quoteTokenFree: BN;
+  quoteTokenTotal: BN;
+  freeSlotBits: BN;
+  isBidBits: BN;
+  orders: BN[];
+  clientIds: BN[];
+  referrerRebatesAccrued: BN;
+} & AccountPadding;
+
+export type Order = {
+  orderId: BN;
+  openOrdersSlot: number;
+  openOrdersAddress: PublicKey;
+  price: number;
+  priceLots: BN;
+  size: number;
+  sizeLots: BN;
+  side: "buy" | "sell";
+  feeTier: number;
+  clientId: BN;
+};

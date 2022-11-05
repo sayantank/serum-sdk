@@ -23,6 +23,7 @@ import {
   LeafSlabNode,
   LegacyMarketState,
   NonPermissionedMarketState,
+  OpenOrdersState,
   PermissionedMarketState,
   SlabHeader,
   SlabNode,
@@ -409,3 +410,23 @@ export const EventLayout = struct<Event>([
 ]);
 
 // ============================= Open Orders Layouts =============================
+
+export const OpenOrdersLayout = struct<OpenOrdersState>([
+  serumHeadPadding(),
+  accountFlags(
+    { ...emptyAccountFlags, initialized: true, openOrders: true },
+    "accountFlags"
+  ),
+  publicKey("market"),
+  publicKey("owner"),
+  u64("baseTokenFree"),
+  u64("baseTokenTotal"),
+  u64("quoteTokenFree"),
+  u64("quoteTokenTotal"),
+  u128("freeSlotBits"),
+  u128("isBidBits"),
+  seq(u128(), 128, "orders"),
+  seq(u64(), 128, "clientIds"),
+  u64("referrerRebatesAccrued"),
+  serumTailPadding(),
+]);

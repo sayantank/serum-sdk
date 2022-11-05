@@ -4,6 +4,7 @@ import {
   NonPermissionedMarketStateLayout,
   PermissionedMarketStateLayout,
 } from "./layout";
+import { OpenOrders } from "./openOrders";
 import { Orderbook } from "./orderbook";
 import { EventQueue } from "./queue";
 import {
@@ -18,8 +19,14 @@ export type MarketStateType =
   | NonPermissionedMarketState
   | PermissionedMarketState;
 
+export type MarketLayoutType =
+  | typeof LegacyMarketStateLayout
+  | typeof NonPermissionedMarketStateLayout
+  | typeof PermissionedMarketStateLayout;
+
 export class SerumMarket {
   readonly marketState: MarketStateType;
+  readonly marketLayout: MarketLayoutType;
 
   readonly address: PublicKey;
   readonly dexProgramId: PublicKey;
@@ -29,12 +36,14 @@ export class SerumMarket {
 
   constructor(
     marketState: MarketStateType,
+    marketLayout: MarketLayoutType,
     address: PublicKey,
     dexProgramId: PublicKey,
     baseDecimals: number,
     quoteDecimals: number
   ) {
     this.marketState = marketState;
+    this.marketLayout = marketLayout;
     this.address = address;
     this.dexProgramId = dexProgramId;
     this.baseDecimals = baseDecimals;
@@ -86,6 +95,7 @@ export class SerumMarket {
 
     return new SerumMarket(
       marketState,
+      marketLayout,
       address,
       dexProgramId,
       baseDecimals,
@@ -103,5 +113,17 @@ export class SerumMarket {
 
   loadEventQueue(connection: Connection): Promise<EventQueue> {
     return EventQueue.load(connection, this.marketState.eventQueue);
+  }
+
+  loadOpenOrders(
+    connection: Connection,
+    owner: PublicKey
+  ): Promise<OpenOrders[]> {
+    return OpenOrders.findForMarketAndOwner(
+      connection,
+      this.address,
+      owner,
+      this.dexProgramId
+    );
   }
 }
