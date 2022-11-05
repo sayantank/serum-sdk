@@ -1,5 +1,6 @@
 import { Connection, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
+import { LEGACY_PROGRAM_IDS } from "./ids";
 import {
   LegacyMarketStateLayout,
   NonPermissionedMarketStateLayout,
@@ -47,6 +48,10 @@ export class SerumMarket {
     baseDecimals: number,
     quoteDecimals: number
   ) {
+    if (LEGACY_PROGRAM_IDS.some((p) => p.equals(dexProgramId))) {
+      throw new Error("Legacy programs are not supported");
+    }
+
     this.marketState = marketState;
     this.marketLayout = marketLayout;
     this.address = address;
