@@ -87,6 +87,10 @@ export class SerumMarket {
     address: PublicKey,
     dexProgramId: PublicKey
   ): Promise<SerumMarket> {
+    if (LEGACY_PROGRAM_IDS.some((p) => p.equals(dexProgramId))) {
+      throw new Error("Legacy programs are not supported");
+    }
+
     const accountInfo = await connection.getAccountInfo(address);
 
     if (accountInfo === null) {
@@ -120,6 +124,7 @@ export class SerumMarket {
     const num = price
       .mul(this.marketState.quoteLotSize)
       .mul(this.baseSplTokenMultiplier);
+
     const den = this.marketState.baseLotSize.mul(this.quoteSplTokenMultiplier);
 
     return divideBNToNumber(num, den);

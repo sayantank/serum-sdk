@@ -5,7 +5,7 @@
   "types": "./dist/index.d.ts",
   "scripts": {
     "build": "tsup src/index.ts --format cjs --dts",
-    "test": "jest --coverage --forceExit --silent --testTimeout=20000"
+    "test": "jest --coverage --forceExit --silent --testTimeout=100000"
   },
   "license": "MIT",
   "dependencies": {
@@ -15,6 +15,7 @@
   },
   "devDependencies": {
     "@project-serum/serum": "^0.13.65",
+    "@solana/spl-token": "^0.3.6",
     "@types/bn.js": "^5.1.1",
     "@types/jest": "^29.2.1",
     "@types/node": "^18.11.8",

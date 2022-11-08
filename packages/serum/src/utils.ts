@@ -1,3 +1,4 @@
+import { u32, u8 } from "@solana/buffer-layout";
 import { Connection, ParsedAccountData, PublicKey } from "@solana/web3.js";
 import BN from "bn.js";
 import { SlabNodeType } from "./layout";
@@ -112,4 +113,20 @@ export function divideBNToNumber(num: BN, den: BN): number {
   const gcd = remainder.gcd(den);
 
   return quotient + remainder.div(gcd).toNumber() / den.div(gcd).toNumber();
+}
+
+export function encodeInstruction(
+  version: number,
+  instructionIndex: number,
+  data: Buffer
+) {
+  const versionLayout = u8("version");
+  const versionBuffer = Buffer.alloc(versionLayout.span);
+  versionLayout.encode(version, versionBuffer);
+
+  const tagLayout = u32("instruction");
+  const indexBuffer = Buffer.alloc(tagLayout.span);
+  tagLayout.encode(instructionIndex, indexBuffer);
+
+  return Buffer.from([...versionBuffer, ...indexBuffer, ...data]);
 }
